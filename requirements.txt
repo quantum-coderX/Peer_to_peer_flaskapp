@@ -10,3 +10,5 @@ mysqlclient
 pymysql
 Flask-WTF
 email-validator
+Flask-Migrate
+Flask-Login

@@ -1,0 +1,169 @@
+{% extends "layout.html" %} {% block content %}
+<div class="container mt-5">
+  <h1 class="mb-4">Welcome to Your Learning Dashboard</h1>
+
+  {% with messages = get_flashed_messages(with_categories=true) %} {% if
+  messages %} {% for category, message in messages %}
+  <div class="alert alert-{{ category }}">{{ message }}</div>
+  {% endfor %} {% endif %} {% endwith %}
+
+  <div class="row">
+    <div class="col-md-6">
+      <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">My Skills</h5>
+        </div>
+        <div class="card-body">
+          <h6>Skills I can teach:</h6>
+          <ul class="list-group mb-3">
+            {% if teaching_skills %} {% for skill in teaching_skills %}
+            <li
+              class="list-group-item d-flex justify-content-between align-items-center"
+            >
+              {{ skill.skill.name }}
+              <span class="badge bg-primary rounded-pill"
+                >Level {{ skill.skill_level }}</span
+              >
+            </li>
+            {% endfor %} {% else %}
+            <li class="list-group-item">
+              You haven't added any teaching skills yet.
+            </li>
+            {% endif %}
+          </ul>
+
+          <h6>Skills I want to learn:</h6>
+          <ul class="list-group">
+            {% if learning_skills %} {% for skill in learning_skills %}
+            <li
+              class="list-group-item d-flex justify-content-between align-items-center"
+            >
+              {{ skill.skill.name }}
+              <span class="badge bg-info rounded-pill"
+                >Level {{ skill.skill_level }}</span
+              >
+            </li>
+            {% endfor %} {% else %}
+            <li class="list-group-item">
+              You haven't added any learning skills yet.
+            </li>
+            {% endif %}
+          </ul>
+
+          <div class="mt-3">
+            <a href="#" class="btn btn-primary">Add New Skill</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+          <h5 class="mb-0">My Connections</h5>
+        </div>
+        <div class="card-body">
+          <h6>Teaching Connections:</h6>
+          <ul class="list-group mb-3">
+            {% if teaching_connections %} {% for connection in
+            teaching_connections %}
+            <li
+              class="list-group-item d-flex justify-content-between align-items-center"
+            >
+              Teaching {{ connection.learner.username }} - {{
+              connection.skill.name }}
+              <span
+                class="badge bg-{{ 'success' if connection.status == 'accepted' else 'warning' }} rounded-pill"
+                >{{ connection.status }}</span
+              >
+            </li>
+            {% endfor %} {% else %}
+            <li class="list-group-item">No teaching connections yet.</li>
+            {% endif %}
+          </ul>
+
+          <h6>Learning Connections:</h6>
+          <ul class="list-group">
+            {% if learning_connections %} {% for connection in
+            learning_connections %}
+            <li
+              class="list-group-item d-flex justify-content-between align-items-center"
+            >
+              Learning from {{ connection.teacher.username }} - {{
+              connection.skill.name }}
+              <span
+                class="badge bg-{{ 'success' if connection.status == 'accepted' else 'warning' }} rounded-pill"
+                >{{ connection.status }}</span
+              >
+            </li>
+            {% endfor %} {% else %}
+            <li class="list-group-item">No learning connections yet.</li>
+            {% endif %}
+          </ul>
+
+          <div class="mt-3">
+            <a href="#" class="btn btn-success">Find Connections</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header bg-info text-white">
+          <h5 class="mb-0">Learning Resources</h5>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Skill</th>
+                  <th>Shared By</th>
+                  <th>Date</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% if resources %} {% for resource in resources %}
+                <tr>
+                  <td>{{ resource.title }}</td>
+                  <td>{{ resource.skill.name }}</td>
+                  <td>{{ resource.user.username }}</td>
+                  <td>{{ resource.created_at.strftime('%Y-%m-%d') }}</td>
+                  <td>
+                    {% if resource.url %}
+                    <a
+                      href="{{ resource.url }}"
+                      target="_blank"
+                      class="btn btn-sm btn-primary"
+                      >View</a
+                    >
+                    {% elif resource.file_path %}
+                    <a href="#" class="btn btn-sm btn-primary">Download</a>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %} {% else %}
+                <tr>
+                  <td colspan="5" class="text-center">
+                    No resources available.
+                  </td>
+                </tr>
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
+
+          <div class="mt-3">
+            <a href="#" class="btn btn-info">Share Resource</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
