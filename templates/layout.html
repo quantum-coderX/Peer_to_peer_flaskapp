@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}Peer-to-Peer Application{% endblock %}</title>
+    <style>
+      /* Basic styles */
+      body {
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        margin: 0;
+        padding: 0;
+      }
+
+      header {
+        background-color: #f4f4f4;
+        padding: 1rem;
+      }
+
+      nav ul {
+        list-style: none;
+        display: flex;
+        padding: 0;
+      }
+
+      nav ul li {
+        margin-right: 1rem;
+      }
+
+      nav ul li a {
+        text-decoration: none;
+        color: #333;
+      }
+
+      nav ul li a:hover {
+        color: #4caf50;
+      }
+
+      main {
+        padding: 1rem;
+      }
+
+      footer {
+        background-color: #f4f4f4;
+        padding: 1rem;
+        margin-top: 2rem;
+      }
+
+      /* Flash messages */
+      .flash-messages {
+        margin-bottom: 1rem;
+      }
+
+      .flash-message {
+        padding: 0.5rem 1rem;
+        margin-bottom: 0.5rem;
+        border-radius: 4px;
+      }
+
+      .flash-success {
+        background-color: #dff0d8;
+        color: #3c763d;
+        border: 1px solid #d6e9c6;
+      }
+
+      .flash-error {
+        background-color: #f2dede;
+        color: #a94442;
+        border: 1px solid #ebccd1;
+      }
+
+      .flash-info {
+        background-color: #d9edf7;
+        color: #31708f;
+        border: 1px solid #bce8f1;
+      }
+
+      .flash-warning {
+        background-color: #fcf8e3;
+        color: #8a6d3b;
+        border: 1px solid #faebcc;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Peer-to-Peer Exchange Platform</h1>
+      <nav>
+        <ul>
+          <li><a href="{{ url_for('index') }}">Home</a></li>
+          <li><a href="{{ url_for('services') }}">Services</a></li>
+          <li><a href="#">About</a></li>
+          <li><a href="#">Contact</a></li>
+          <li><a href="{{ url_for('login') }}">Login</a></li>
+          <li><a href="{{ url_for('register') }}">Register</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <main>
+      {% with messages = get_flashed_messages(with_categories=true) %} {% if
+      messages %}
+      <div class="flash-messages">
+        {% for category, message in messages %}
+        <div class="flash-message flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+      {% endif %} {% endwith %} {% block content %}
+      <!-- Content will be inserted here by child templates -->
+      {% endblock %}
+    </main>
+
+    <footer>
+      <div>
+        <h4>P2P App</h4>
+        <p>A secure and efficient way to connect and exchange with peers.</p>
+      </div>
+      <div>
+        <h4>Quick Links</h4>
+        <ul>
+          <li><a href="{{ url_for('index') }}">Home</a></li>
+          <li><a href="{{ url_for('services') }}">Services</a></li>
+          <li><a href="#">About</a></li>
+          <li><a href="#">Contact</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Contact Us</h4>
+        <p>Email: info@p2papp.com</p>
+        <p>Phone: (123) 456-7890</p>
+      </div>
+      <p>&copy; 2025 P2P Application. All rights reserved.</p>
+    </footer>
+  </body>
+</html>

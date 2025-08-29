@@ -1,0 +1,12 @@
+flask
+Flask-SQLAlchemy
+pandas
+numpy
+sqlalchemy
+flask-marshmallow
+requests
+marshmallow-sqlalchemy
+mysqlclient
+pymysql
+Flask-WTF
+email-validator
