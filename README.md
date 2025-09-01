@@ -31,6 +31,41 @@ This project was developed as part of a DBMS lab assignment. It demonstrates the
   - Organize resources by skill/topic
   - Access shared resources from your dashboard
 
+## Installation and Setup
+
+### Prerequisites
+
+- Python 3.10 or higher
+- pip (Python package manager)
+- Git
+
+### Clone the Repository
+
+```bash
+git clone https://github.com/quantum-coderX/Peer_to_peer_flaskapp.git
+cd Peer_to_peer_flaskapp
+```
+
+### Setting Up Environment
+
+```bash
+# Create virtual environment
+python -m venv venv
+
+# Activate virtual environment
+# On Windows
+venv\Scripts\activate
+# On macOS/Linux
+# source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### Initialize the Database
+
+The SQLite database will be automatically created when you run the application for the first time. If you need to reset the database, you can delete the `peer_to_peer.db` file and restart the application.
+
 ## Running the Application
 
 ### Start the Development Server
