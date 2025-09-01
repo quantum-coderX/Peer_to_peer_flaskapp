@@ -5,7 +5,7 @@ from flask_migrate import Migrate
 from flask_login import LoginManager, UserMixin, login_user, current_user, logout_user, login_required
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import Table, Column, Integer, String, Float
-from forms import LoginForm, RegistrationForm
+from forms import LoginForm, RegistrationForm, SkillForm, UserSkillForm, ResourceForm, ConnectionRequestForm, ProfileUpdateForm
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 import pandas as pd
@@ -199,6 +199,155 @@ def dashboard():
                           teaching_connections=teaching_connections,
                           learning_connections=learning_connections,
                           resources=resources)
+
+@app.route('/add-skill', methods=['GET', 'POST'])
+@login_required
+def add_skill():
+    form = SkillForm()
+    if form.validate_on_submit():
+        # Check if skill already exists
+        existing_skill = Skill.query.filter_by(name=form.name.data).first()
+        if existing_skill:
+            flash('This skill already exists in the system.', 'warning')
+            return redirect(url_for('add_user_skill'))
+        
+        # Create new skill
+        skill = Skill(name=form.name.data, description=form.description.data)
+        db.session.add(skill)
+        db.session.commit()
+        
+        flash(f'Skill "{form.name.data}" has been added!', 'success')
+        return redirect(url_for('add_user_skill'))
+        
+    return render_template('add_skill.html', form=form)
+
+@app.route('/add-user-skill', methods=['GET', 'POST'])
+@login_required
+def add_user_skill():
+    form = UserSkillForm()
+    # Populate the skill select field with available skills
+    form.skill.choices = [(skill.id, skill.name) for skill in Skill.query.order_by(Skill.name).all()]
+    
+    if form.validate_on_submit():
+        # Check if the user already has this skill
+        existing_user_skill = UserSkill.query.filter_by(
+            user_id=current_user.id,
+            skill_id=form.skill.data,
+            is_teacher=form.is_teacher.data
+        ).first()
+        
+        if existing_user_skill:
+            flash('You already have this skill with the same role (teacher/learner).', 'warning')
+            return redirect(url_for('dashboard'))
+        
+        # Create new user skill
+        user_skill = UserSkill(
+            user_id=current_user.id,
+            skill_id=form.skill.data,
+            skill_level=form.skill_level.data,
+            is_teacher=form.is_teacher.data
+        )
+        
+        db.session.add(user_skill)
+        db.session.commit()
+        
+        role = "teacher" if form.is_teacher.data else "learner"
+        skill_name = Skill.query.get(form.skill.data).name
+        flash(f'You have been added as a {role} for {skill_name}!', 'success')
+        return redirect(url_for('dashboard'))
+        
+    return render_template('add_user_skill.html', form=form)
+
+@app.route('/find-connections')
+@login_required
+def find_connections():
+    mode = request.args.get('mode', 'teachers')
+    skill_id = request.args.get('skill_id', type=int)
+    
+    # Get all skills for the dropdowns
+    skills = Skill.query.order_by(Skill.name).all()
+    
+    # If a skill is selected, find matching users
+    users = []
+    selected_skill = None
+    if skill_id:
+        selected_skill = Skill.query.get_or_404(skill_id)
+        
+        if mode == 'teachers':
+            # Find users who can teach this skill
+            users = UserSkill.query.filter_by(
+                skill_id=skill_id,
+                is_teacher=True
+            ).all()
+        else:
+            # Find users who want to learn this skill
+            users = UserSkill.query.filter_by(
+                skill_id=skill_id,
+                is_teacher=False
+            ).all()
+    
+    return render_template('find_connections.html', 
+                          skills=skills,
+                          users=users,
+                          selected_skill=selected_skill)
+
+@app.route('/request-connection/<int:user_id>/<int:skill_id>/<string:mode>')
+@login_required
+def request_connection(user_id, skill_id, mode):
+    # Get the target user
+    target_user = User.query.get_or_404(user_id)
+    skill = Skill.query.get_or_404(skill_id)
+    
+    # Create the connection based on the mode
+    if mode == 'teachers':
+        # Current user wants to learn from target user
+        connection = Connection(
+            teacher_id=user_id,
+            learner_id=current_user.id,
+            skill_id=skill_id,
+            status='pending'
+        )
+        flash_message = f'Learning request sent to {target_user.username} for {skill.name}!'
+    else:
+        # Current user wants to teach target user
+        connection = Connection(
+            teacher_id=current_user.id,
+            learner_id=user_id,
+            skill_id=skill_id,
+            status='pending'
+        )
+        flash_message = f'Teaching offer sent to {target_user.username} for {skill.name}!'
+    
+    db.session.add(connection)
+    db.session.commit()
+    flash(flash_message, 'success')
+    
+    return redirect(url_for('dashboard'))
+
+@app.route('/share-resource', methods=['GET', 'POST'])
+@login_required
+def share_resource():
+    form = ResourceForm()
+    # Populate the skill select field with available skills
+    form.skill.choices = [(skill.id, skill.name) for skill in Skill.query.order_by(Skill.name).all()]
+    
+    if form.validate_on_submit():
+        # Create new resource
+        resource = Resource(
+            title=form.title.data,
+            description=form.description.data,
+            url=form.url.data,
+            skill_id=form.skill.data,
+            user_id=current_user.id
+        )
+        
+        db.session.add(resource)
+        db.session.commit()
+        
+        flash('Learning resource has been shared successfully!', 'success')
+        return redirect(url_for('dashboard'))
+        
+    return render_template('share_resource.html', form=form)
 
 if __name__ == '__main__':
     with app.app_context():

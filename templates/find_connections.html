@@ -1,0 +1,133 @@
+{% extends "layout.html" %}
+
+{% block title %}Find Connections - Peer-to-Peer Application{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="mb-4">Find Connections</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Find Teachers</h5>
+                </div>
+                <div class="card-body">
+                    <form method="GET" action="{{ url_for('find_connections') }}">
+                        <input type="hidden" name="mode" value="teachers">
+                        <div class="mb-3">
+                            <label for="skill_id" class="form-label">I want to learn:</label>
+                            <select name="skill_id" id="skill_id" class="form-select">
+                                <option value="">-- Select a Skill --</option>
+                                {% for skill in skills %}
+                                    <option value="{{ skill.id }}" {% if request.args.get('skill_id')|int == skill.id %}selected{% endif %}>{{ skill.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">Find Teachers</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Find Learners</h5>
+                </div>
+                <div class="card-body">
+                    <form method="GET" action="{{ url_for('find_connections') }}">
+                        <input type="hidden" name="mode" value="learners">
+                        <div class="mb-3">
+                            <label for="skill_id" class="form-label">I can teach:</label>
+                            <select name="skill_id" id="skill_id" class="form-select">
+                                <option value="">-- Select a Skill --</option>
+                                {% for skill in skills %}
+                                    <option value="{{ skill.id }}" {% if request.args.get('skill_id')|int == skill.id and request.args.get('mode') == 'learners' %}selected{% endif %}>{{ skill.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success">Find Learners</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if users %}
+    <div class="card">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0">
+                {% if request.args.get('mode') == 'teachers' %}
+                    Available Teachers for {{ selected_skill.name }}
+                {% else %}
+                    People Wanting to Learn {{ selected_skill.name }}
+                {% endif %}
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Skill Level</th>
+                            <th>Member Since</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user_skill in users %}
+                            <tr>
+                                <td>{{ user_skill.user.username }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <span class="me-2">{{ user_skill.skill_level }}</span>
+                                        <div class="progress flex-grow-1" style="height: 10px;">
+                                            <div class="progress-bar bg-success skill-level-{{ user_skill.skill_level }}" role="progressbar" 
+                                                 aria-valuenow="{{ user_skill.skill_level }}" 
+                                                 aria-valuemin="0" aria-valuemax="5"></div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ user_skill.user.date_registered.strftime('%Y-%m-%d') }}</td>
+                                <td>
+                                    {% if user_skill.user.id != current_user.id %}
+                                        <a href="{{ url_for('request_connection', user_id=user_skill.user.id, skill_id=user_skill.skill.id, mode=request.args.get('mode')) }}" 
+                                           class="btn btn-sm btn-primary">
+                                            {% if request.args.get('mode') == 'teachers' %}
+                                                Request Learning
+                                            {% else %}
+                                                Offer to Teach
+                                            {% endif %}
+                                        </a>
+                                    {% else %}
+                                        <span class="text-muted">This is you</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% elif request.args.get('skill_id') %}
+    <div class="alert alert-info">
+        No users found for the selected criteria. Try selecting a different skill.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

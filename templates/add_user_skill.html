@@ -1,0 +1,62 @@
+{% extends "layout.html" %} {% block content %}
+<div class="container mt-5">
+  <div class="row">
+    <div class="col-md-8 offset-md-2">
+      <div class="card">
+        <div class="card-header bg-success text-white">
+          <h4 class="mb-0">Add Skill to Your Profile</h4>
+        </div>
+        <div class="card-body">
+          {% with messages = get_flashed_messages(with_categories=true) %} {% if
+          messages %} {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">{{ message }}</div>
+          {% endfor %} {% endif %} {% endwith %}
+
+          <form method="POST" action="{{ url_for('add_user_skill') }}">
+            {{ form.hidden_tag() }}
+            <div class="mb-3">
+              {{ form.skill.label(class="form-label") }} {% if form.skill.errors
+              %} {{ form.skill(class="form-select is-invalid") }}
+              <div class="invalid-feedback">
+                {% for error in form.skill.errors %}
+                <span>{{ error }}</span>
+                {% endfor %}
+              </div>
+              {% else %} {{ form.skill(class="form-select") }} {% endif %}
+              <div class="mt-2">
+                <a
+                  href="{{ url_for('add_skill') }}"
+                  class="btn btn-sm btn-outline-primary"
+                  >Add New Skill to System</a
+                >
+              </div>
+            </div>
+            <div class="mb-3">
+              {{ form.skill_level.label(class="form-label") }} {% if
+              form.skill_level.errors %} {{ form.skill_level(class="form-select
+              is-invalid") }}
+              <div class="invalid-feedback">
+                {% for error in form.skill_level.errors %}
+                <span>{{ error }}</span>
+                {% endfor %}
+              </div>
+              {% else %} {{ form.skill_level(class="form-select") }} {% endif %}
+            </div>
+            <div class="mb-3 form-check">
+              {{ form.is_teacher(class="form-check-input") }} {{
+              form.is_teacher.label(class="form-check-label") }}
+              <div class="form-text">
+                Check this if you want to teach this skill. Leave unchecked if
+                you want to learn.
+              </div>
+            </div>
+            <div class="d-grid gap-2">
+              {{ form.submit(class="btn btn-success") }}
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

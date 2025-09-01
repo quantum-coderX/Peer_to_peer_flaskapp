@@ -1,0 +1,72 @@
+{% extends "layout.html" %} {% block content %}
+<div class="container mt-5">
+  <div class="row">
+    <div class="col-md-8 offset-md-2">
+      <div class="card">
+        <div class="card-header bg-info text-white">
+          <h4 class="mb-0">Share Learning Resource</h4>
+        </div>
+        <div class="card-body">
+          {% with messages = get_flashed_messages(with_categories=true) %} {% if
+          messages %} {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">{{ message }}</div>
+          {% endfor %} {% endif %} {% endwith %}
+
+          <form method="POST" action="{{ url_for('share_resource') }}">
+            {{ form.hidden_tag() }}
+            <div class="mb-3">
+              {{ form.title.label(class="form-label") }} {% if form.title.errors
+              %} {{ form.title(class="form-control is-invalid") }}
+              <div class="invalid-feedback">
+                {% for error in form.title.errors %}
+                <span>{{ error }}</span>
+                {% endfor %}
+              </div>
+              {% else %} {{ form.title(class="form-control") }} {% endif %}
+            </div>
+            <div class="mb-3">
+              {{ form.description.label(class="form-label") }} {% if
+              form.description.errors %} {{ form.description(class="form-control
+              is-invalid", rows=3) }}
+              <div class="invalid-feedback">
+                {% for error in form.description.errors %}
+                <span>{{ error }}</span>
+                {% endfor %}
+              </div>
+              {% else %} {{ form.description(class="form-control", rows=3) }} {%
+              endif %}
+            </div>
+            <div class="mb-3">
+              {{ form.url.label(class="form-label") }} {% if form.url.errors %}
+              {{ form.url(class="form-control is-invalid") }}
+              <div class="invalid-feedback">
+                {% for error in form.url.errors %}
+                <span>{{ error }}</span>
+                {% endfor %}
+              </div>
+              {% else %} {{ form.url(class="form-control") }} {% endif %}
+              <small class="form-text text-muted"
+                >Enter the URL for online resources like articles, videos,
+                etc.</small
+              >
+            </div>
+            <div class="mb-3">
+              {{ form.skill.label(class="form-label") }} {% if form.skill.errors
+              %} {{ form.skill(class="form-select is-invalid") }}
+              <div class="invalid-feedback">
+                {% for error in form.skill.errors %}
+                <span>{{ error }}</span>
+                {% endfor %}
+              </div>
+              {% else %} {{ form.skill(class="form-select") }} {% endif %}
+            </div>
+            <div class="d-grid gap-2">
+              {{ form.submit(class="btn btn-info") }}
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
