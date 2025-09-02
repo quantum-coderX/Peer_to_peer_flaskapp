@@ -1,0 +1,50 @@
+{% extends "layout.html" %}
+{% block title %}{{ post.title }} - Post Details{% endblock %}
+
+{% block content %}
+  <div class="post-details">
+    <h2>{{ post.title }}</h2>
+    <p class="meta">
+      Posted by <strong>{{ post.author.username }}</strong> 
+      on {{ post.date_posted.strftime('%B %d, %Y') }}
+    </p>
+    <div class="content">
+      {{ post.content }}
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="actions">
+    <a href="{{ url_for('edit_post', post_id=post.id) }}" class="btn btn-secondary">Edit</a>
+    <a href="{{ url_for('delete_post', post_id=post.id) }}" class="btn btn-danger">Delete</a>
+    <a href="{{ url_for('community_board') }}" class="btn btn-link">Back to Board</a>
+  </div>
+
+  <style>
+    .post-details {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .meta {
+      color: gray;
+      font-size: 0.9em;
+      margin-bottom: 10px;
+    }
+
+    .content {
+      margin-top: 15px;
+      line-height: 1.6;
+    }
+
+    .actions {
+      margin-top: 20px;
+    }
+
+    .btn {
+      margin-right: 10px;
+    }
+  </style>
+{% endblock %}
