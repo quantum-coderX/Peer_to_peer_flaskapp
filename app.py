@@ -5,12 +5,13 @@ from flask_migrate import Migrate
 from flask_login import LoginManager, UserMixin, login_user, current_user, logout_user, login_required
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import Table, Column, Integer, String, Float
-from forms import LoginForm, RegistrationForm, SkillForm, UserSkillForm, ResourceForm, ConnectionRequestForm, ProfileUpdateForm
+from forms import LoginForm, RegistrationForm, SkillForm, UserSkillForm, ResourceForm, ConnectionRequestForm, ProfileUpdateForm, PostForm
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 import pandas as pd
 import numpy as np
 import os
+
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 app = Flask(__name__)
@@ -112,6 +113,23 @@ class Resource(db.Model):
     
     def __repr__(self):
         return f'<Resource {self.title} for {self.skill.name}>'
+
+class Post(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    user = db.relationship('User', backref=db.backref('posts',lazy=True))
+    comments = db.relationship('Comment', backref='post', lazy=True)
+
+class Comment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
 @app.route('/')
 def index():
@@ -349,7 +367,44 @@ def share_resource():
         
     return render_template('share_resource.html', form=form)
 
+
+@app.route('/community')
+def community():
+    posts = Post.query.order_by(Post.created_at.desc()).all()
+    return render_template('community.html', posts=posts)
+
+@app.route('/community/new', methods=['GET', 'POST'])
+@login_required
+def new_post():
+    form = PostForm()
+    if form.validate_on_submit():
+        post = Post(
+            title=form.title.data,
+            content=form.content.data,
+            user_id=current_user.id
+        )
+        db.session.add(post)
+        db.session.commit()
+        flash('Post created successfully!', 'success')
+        return redirect(url_for('community'))
+    return render_template('new_post.html', form=form)
+
+
+@app.route('/community/<int:post_id>', methods=['GET', 'POST'])
+def post_detail(post_id):
+    post = Post.query.get_or_404(post_id)
+    if request.method == 'POST':
+        content = request.form['content']
+        if content:
+            comment = Comment(content=content, post_id=post.id, user_id=current_user.id)
+            db.session.add(comment)
+            db.session.commit()
+            flash('Comment added!', 'success')
+            return redirect(url_for('post_detail', post_id=post.id))
+    return render_template('post_detail.html', post=post)
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()  # Create database tables if they don't exist
     app.run(debug=True)
+

@@ -1,0 +1,14 @@
+<h2>Community Board</h2>
+<a href="{{ url_for('new_post') }}">+ New Post</a>
+
+<ul>
+  {% for post in posts %}
+    <li>
+      <a href="{{ url_for('post_detail', post_id=post.id) }}">
+        <strong>{{ post.title }}</strong>
+      </a>
+      <p>{{ post.content[:100] }}...</p>
+      <small>By {{ post.user.username }} on {{ post.created_at.strftime("%Y-%m-%d") }}</small>
+    </li>
+  {% endfor %}
+</ul>

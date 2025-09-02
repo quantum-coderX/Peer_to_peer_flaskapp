@@ -47,3 +47,8 @@ class ProfileUpdateForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
     bio = TextAreaField('Bio', validators=[Optional(), Length(max=500)])
     submit = SubmitField('Update Profile')
+
+class PostForm(FlaskForm):
+    title = StringField('Title', validators=[DataRequired(), Length(min=2, max=100)])
+    content = TextAreaField('Content', validators=[DataRequired(), Length(min=2)])
+    submit = SubmitField('Create')
