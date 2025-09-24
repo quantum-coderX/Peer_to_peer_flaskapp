@@ -1,14 +1,69 @@
 <h2>Community Board</h2>
-<a href="{{ url_for('new_post') }}">+ New Post</a>
 
-<ul>
+<style>
+  /* Scoped styles for community page */
+  .community-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    margin-bottom: 1rem;
+  }
+  .community-header h2 { margin: 0; font-size: 1.25rem; }
+  .btn-primary {
+    display:inline-block; background:#2563eb; color:#fff; text-decoration:none;
+    padding:.5rem .9rem; border-radius:.5rem; transition:filter .15s ease, transform .05s ease;
+  }
+  .btn-primary:hover { filter: brightness(1.1); }
+  .btn-danger {
+    background:#dc2626; color:#fff; border:none; border-radius:.5rem; padding:.35rem .55rem; font-size:.875rem;
+  }
+  .posts-grid {
+    list-style:none; padding:0; margin:0;
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:1rem;
+  }
+  .card {
+    background:#ffffff; border:1px solid #e5e7eb; border-radius:12px; padding:1rem;
+    box-shadow:0 6px 16px rgba(0,0,0,.06); transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+    display:flex; flex-direction:column; gap:.5rem;
+  }
+  .card:hover { transform: translateY(-2px); border-color:#d1d5db; box-shadow:0 10px 20px rgba(0,0,0,.08); }
+  .card a { text-decoration:none; color:inherit; display:block; }
+  .card strong { font-size:1.05rem; }
+  .muted { color:#6b7280; font-size:.9rem; }
+  .card-actions { display:flex; justify-content:space-between; align-items:center; margin-top:.25rem; gap:.5rem; }
+</style>
+
+<div class="community-header">
+  <h2>Community Board</h2>
+  <a href="{{ url_for('new_post') }}" class="btn btn-primary">+ New Post</a>
+</div>
+
+<ul class="posts-grid">
   {% for post in posts %}
-    <li>
+    <li class="card">
       <a href="{{ url_for('post_detail', post_id=post.id) }}">
         <strong>{{ post.title }}</strong>
+        <p class="muted" style="margin:.25rem 0 0;">
+          {{ post.content[:140] }}{% if post.content|length > 140 %}...{% endif %}
+        </p>
+        <div class="muted" style="margin-top:.5rem;">
+          By {{ post.user.username }} • {{ post.created_at.strftime("%Y-%m-%d") }}
+        </div>
       </a>
-      <p>{{ post.content[:100] }}...</p>
-      <small>By {{ post.user.username }} on {{ post.created_at.strftime("%Y-%m-%d") }}</small>
+
+      {% if current_user.is_authenticated and current_user.id == post.user_id %}
+      <div class="card-actions">
+        <span class="muted">Your post</span>
+        <form method="POST"
+              action="{{ url_for('delete_post', post_id=post.id) }}"
+              onsubmit="return confirm('Delete this post?');"
+              style="margin:0;">
+          {{ delete_form.hidden_tag() }}
+          <button type="submit" class="btn-danger">Delete</button>
+        </form>
+      </div>
+      {% endif %}
     </li>
   {% endfor %}
 </ul>

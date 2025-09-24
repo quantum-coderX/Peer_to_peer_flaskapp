@@ -5,7 +5,7 @@ from flask_migrate import Migrate
 from flask_login import LoginManager, UserMixin, login_user, current_user, logout_user, login_required
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import Table, Column, Integer, String, Float
-from forms import LoginForm, RegistrationForm, SkillForm, UserSkillForm, ResourceForm, ConnectionRequestForm, ProfileUpdateForm, PostForm
+from forms import LoginForm, RegistrationForm, SkillForm, UserSkillForm, ResourceForm, ConnectionRequestForm, ProfileUpdateForm, PostForm, DeletePostForm
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 import pandas as pd
@@ -371,7 +371,8 @@ def share_resource():
 @app.route('/community')
 def community():
     posts = Post.query.order_by(Post.created_at.desc()).all()
-    return render_template('community.html', posts=posts)
+    delete_form = DeletePostForm()
+    return render_template('community.html', posts=posts, delete_form=delete_form)
 
 @app.route('/community/new', methods=['GET', 'POST'])
 @login_required
@@ -401,7 +402,21 @@ def post_detail(post_id):
             db.session.commit()
             flash('Comment added!', 'success')
             return redirect(url_for('post_detail', post_id=post.id))
-    return render_template('post_detail.html', post=post)
+    delete_form = DeletePostForm()
+    return render_template('post_detail.html', post=post, delete_form=delete_form)
+
+
+@app.route('/community/<int:post_id>/delete', methods=['POST'])
+@login_required
+def delete_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    if post.user_id != current_user.id:
+        flash('You are not authorized to delete this post.', 'danger')
+        return redirect(url_for('post_detail', post_id=post.id))
+    db.session.delete(post)
+    db.session.commit()
+    flash('Post deleted.', 'success')
+    return redirect(url_for('community'))
 
 if __name__ == '__main__':
     with app.app_context():
