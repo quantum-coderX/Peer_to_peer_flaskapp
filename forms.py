@@ -52,3 +52,6 @@ class PostForm(FlaskForm):
     title = StringField('Title', validators=[DataRequired(), Length(min=2, max=100)])
     content = TextAreaField('Content', validators=[DataRequired(), Length(min=2)])
     submit = SubmitField('Create')
+
+class DeletePostForm(FlaskForm):
+    submit = SubmitField('Delete')

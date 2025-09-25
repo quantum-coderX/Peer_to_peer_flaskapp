@@ -2,20 +2,48 @@
 {% block title %}{{ post.title }} - Post Details{% endblock %}
 
 {% block content %}
-  <div class="post-details">
-    <h2>{{ post.title }}</h2>
-    <p class="meta">
-      Posted by <strong>{{ post.user.username }}</strong> 
+  <style>
+    /* Scoped styles for post detail page */
+    .page-card {
+      max-width: 780px;
+      margin: 0 auto;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 1rem;
+      box-shadow: 0 6px 16px rgba(0,0,0,.06);
+    }
+    .muted { color: #6b7280; font-size: .9rem; }
+    .btn-link { color: #2563eb; text-decoration: none; padding: .5rem .25rem; }
+    .btn-link:hover { text-decoration: underline; }
+    .content { white-space: pre-wrap; margin-top: 1rem; }
+    .btn-danger {
+      background: #dc2626; color:#fff; border:none; border-radius:.5rem; padding:.5rem .75rem;
+    }
+    .actions { display:flex; gap:.5rem; margin-top:1rem; align-items:center; }
+  </style>
+
+  <div class="page-card">
+    <h2 style="margin-top:0;">{{ post.title }}</h2>
+    <p class="muted">
+      Posted by <strong>{{ post.user.username }}</strong>
       on {{ post.created_at.strftime('%B %d, %Y') }}
     </p>
     <div class="content">
       {{ post.content }}
     </div>
-  </div>
+    <div class="actions">
+      <a href="{{ url_for('community') }}" class="btn btn-link">Back to Board</a>
 
-  <hr>
-
-  <div class="actions">
-    <a href="{{ url_for('community') }}" class="btn btn-link">Back to Board</a>
+      {% if current_user.is_authenticated and current_user.id == post.user_id %}
+      <form method="POST"
+            action="{{ url_for('delete_post', post_id=post.id) }}"
+            onsubmit="return confirm('Delete this post?');"
+            style="display:inline;">
+        {{ delete_form.hidden_tag() }}
+        <button type="submit" class="btn-danger">Delete</button>
+      </form>
+      {% endif %}
+    </div>
   </div>
 {% endblock %}
