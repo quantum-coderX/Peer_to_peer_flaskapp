@@ -99,7 +99,7 @@
                     Learning from {{ connection.teacher.username }} - {{ connection.skill.name }}
                     <div>
                       <span class="badge bg-warning rounded-pill">pending</span>
-                      <a href="{{ url_for('handle_connection', connection_id=connection.id, action='reject') }}" class="btn btn-sm btn-danger ms-2">Reject</a>
+                      <a href="{{ url_for('handle_connection', connection_id=connection.id, action='reject') }}" class="btn btn-sm btn-secondary ms-2">Remove</a>
                     </div>
                   </div>
                   <small class="text-muted mt-1 d-block">Waiting for teacher to accept the connection request</small>
@@ -231,7 +231,5 @@
     </div>
   </div>
 
-
-  
 </div>
 {% endblock %}

@@ -401,13 +401,21 @@ def handle_connection(connection_id, action):
         
         flash(f'Connection with {learner.username} for {skill.name} has been accepted!', 'success')
     elif action == 'reject':
-        # Both teachers and learners can reject requests
+        # Both teachers and learners can reject/remove requests
         connection.status = 'rejected'
         db.session.commit()
         
-        # Get the other user
-        other_user = User.query.get(connection.teacher_id if connection.learner_id == current_user.id else connection.learner_id)
-        flash(f'Connection request with {other_user.username} has been rejected.', 'info')
+        # Customize message based on who is rejecting
+        if current_user.id == connection.teacher_id:
+            # Teacher is rejecting the request
+            learner = User.query.get(connection.learner_id)
+            skill = Skill.query.get(connection.skill_id)
+            flash(f'Connection request from {learner.username} for {skill.name} has been rejected.', 'info')
+        else:
+            # Learner is removing their request
+            teacher = User.query.get(connection.teacher_id)
+            skill = Skill.query.get(connection.skill_id)
+            flash(f'Connection request to {teacher.username} for {skill.name} has been removed.', 'info')
     
     return redirect(url_for('dashboard'))
 
