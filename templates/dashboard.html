@@ -68,16 +68,26 @@
           <h6>Teaching Connection Requests:</h6>
           <ul class="list-group mb-3">
             {% if teaching_connections %}
-              {% set pending_teaching = teaching_connections|selectattr('status', 'equalto', 'pending')|list %}
+              {% set pending_teaching = teaching_connections|selectattr('status', 'in', ['pending_learner', 'pending_teacher', 'pending'])|list %}
               {% if pending_teaching %}
                 {% for connection in pending_teaching %}
                 <li class="list-group-item d-flex justify-content-between align-items-center">
+                  {% if connection.status == 'pending_teacher' %}
+                  <!-- Teacher initiated offer (shown to teacher) -->
+                  Offered to teach {{ connection.learner.username }} - {{ connection.skill.name }}
+                  <div>
+                    <span class="badge bg-warning rounded-pill">pending</span>
+                    <a href="{{ url_for('handle_connection', connection_id=connection.id, action='reject') }}" class="btn btn-sm btn-secondary ms-2">Withdraw</a>
+                  </div>
+                  {% else %}
+                  <!-- Learner initiated request (shown to teacher) -->
                   Teaching {{ connection.learner.username }} - {{ connection.skill.name }}
                   <div>
                     <span class="badge bg-warning rounded-pill">pending</span>
                     <a href="{{ url_for('handle_connection', connection_id=connection.id, action='accept') }}" class="btn btn-sm btn-success ms-2">Accept</a>
                     <a href="{{ url_for('handle_connection', connection_id=connection.id, action='reject') }}" class="btn btn-sm btn-danger ms-2">Reject</a>
                   </div>
+                  {% endif %}
                 </li>
                 {% endfor %}
               {% else %}
@@ -91,18 +101,28 @@
           <h6>Learning Connection Requests:</h6>
           <ul class="list-group">
             {% if learning_connections %}
-              {% set pending_learning = learning_connections|selectattr('status', 'equalto', 'pending')|list %}
+              {% set pending_learning = learning_connections|selectattr('status', 'in', ['pending_learner', 'pending_teacher', 'pending'])|list %}
               {% if pending_learning %}
                 {% for connection in pending_learning %}
                 <li class="list-group-item">
                   <div class="d-flex justify-content-between align-items-center">
+                    {% if connection.status == 'pending_teacher' %}
+                    <!-- Teacher initiated offer (shown to learner) -->
+                    {{ connection.teacher.username }} offered to teach you - {{ connection.skill.name }}
+                    <div>
+                      <span class="badge bg-warning rounded-pill">pending</span>
+                      <a href="{{ url_for('handle_connection', connection_id=connection.id, action='accept') }}" class="btn btn-sm btn-success ms-2">Accept</a>
+                      <a href="{{ url_for('handle_connection', connection_id=connection.id, action='reject') }}" class="btn btn-sm btn-danger ms-2">Decline</a>
+                    </div>
+                    {% else %}
+                    <!-- Learner initiated request (shown to learner) -->
                     Learning from {{ connection.teacher.username }} - {{ connection.skill.name }}
                     <div>
                       <span class="badge bg-warning rounded-pill">pending</span>
-                      <a href="{{ url_for('handle_connection', connection_id=connection.id, action='reject') }}" class="btn btn-sm btn-secondary ms-2">Remove</a>
+                      <a href="{{ url_for('handle_connection', connection_id=connection.id, action='reject') }}" class="btn btn-sm btn-secondary ms-2">Withdraw</a>
                     </div>
+                    {% endif %}
                   </div>
-                  <small class="text-muted mt-1 d-block">Waiting for teacher to accept the connection request</small>
                 </li>
                 {% endfor %}
               {% else %}

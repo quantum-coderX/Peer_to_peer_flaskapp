@@ -85,7 +85,7 @@ class Connection(db.Model):
     teacher_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     learner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     skill_id = db.Column(db.Integer, db.ForeignKey('skill.id'), nullable=False)
-    status = db.Column(db.String(20), default='pending')  # pending, accepted, rejected, completed
+    status = db.Column(db.String(20), default='pending')  # pending_learner, pending_teacher, accepted, rejected, completed
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Define relationships
@@ -355,7 +355,7 @@ def request_connection(user_id, skill_id, mode):
             teacher_id=user_id,
             learner_id=current_user.id,
             skill_id=skill_id,
-            status='pending'
+            status='pending_learner'  # Learner initiated request
         )
         flash_message = f'Learning request sent to {target_user.username} for {skill.name}!'
     else:
@@ -364,7 +364,7 @@ def request_connection(user_id, skill_id, mode):
             teacher_id=current_user.id,
             learner_id=user_id,
             skill_id=skill_id,
-            status='pending'
+            status='pending_teacher'  # Teacher initiated offer
         )
         flash_message = f'Teaching offer sent to {target_user.username} for {skill.name}!'
     
@@ -385,37 +385,63 @@ def handle_connection(connection_id, action):
         flash('You are not authorized to handle this connection request.', 'danger')
         return redirect(url_for('dashboard'))
     
-    # For accepting connections, only teachers can accept
-    if action == 'accept' and current_user.id != connection.teacher_id:
-        flash('Only teachers can accept connection requests.', 'warning')
-        return redirect(url_for('dashboard'))
+    # For accepting connections, check who can accept based on the status
+    if action == 'accept':
+        if (connection.status == 'pending_learner' or connection.status == 'pending') and current_user.id != connection.teacher_id:
+            # For learner-initiated connections, only teachers can accept
+            flash('Only teachers can accept learning requests.', 'warning')
+            return redirect(url_for('dashboard'))
+        elif connection.status == 'pending_teacher' and current_user.id != connection.learner_id:
+            # For teacher-initiated connections, only learners can accept
+            flash('Only learners can accept teaching offers.', 'warning')
+            return redirect(url_for('dashboard'))
+    
+    # Store original status for later use
+    original_status = connection.status
     
     # Handle the action
     if action == 'accept':
         connection.status = 'accepted'
         db.session.commit()
         
-        # Get the learner
-        learner = User.query.get(connection.learner_id)
         skill = Skill.query.get(connection.skill_id)
         
-        flash(f'Connection with {learner.username} for {skill.name} has been accepted!', 'success')
+        # Customize message based on who initiated the connection
+        if original_status == 'pending_learner' or original_status == 'pending':
+            # Learner-initiated connection, teacher is accepting
+            learner = User.query.get(connection.learner_id)
+            flash(f'Learning request from {learner.username} for {skill.name} has been accepted!', 'success')
+        else:  # pending_teacher
+            # Teacher-initiated connection, learner is accepting
+            teacher = User.query.get(connection.teacher_id)
+            flash(f'Teaching offer from {teacher.username} for {skill.name} has been accepted!', 'success')
+    
     elif action == 'reject':
         # Both teachers and learners can reject/remove requests
         connection.status = 'rejected'
         db.session.commit()
         
-        # Customize message based on who is rejecting
-        if current_user.id == connection.teacher_id:
-            # Teacher is rejecting the request
-            learner = User.query.get(connection.learner_id)
-            skill = Skill.query.get(connection.skill_id)
-            flash(f'Connection request from {learner.username} for {skill.name} has been rejected.', 'info')
-        else:
-            # Learner is removing their request
-            teacher = User.query.get(connection.teacher_id)
-            skill = Skill.query.get(connection.skill_id)
-            flash(f'Connection request to {teacher.username} for {skill.name} has been removed.', 'info')
+        skill = Skill.query.get(connection.skill_id)
+        
+        # Customize message based on who is rejecting and the type of request
+        if original_status == 'pending_learner' or original_status == 'pending':
+            if current_user.id == connection.teacher_id:
+                # Teacher is rejecting a learner's request
+                learner = User.query.get(connection.learner_id)
+                flash(f'Learning request from {learner.username} for {skill.name} has been rejected.', 'info')
+            else:
+                # Learner is withdrawing their own request
+                teacher = User.query.get(connection.teacher_id)
+                flash(f'Your learning request to {teacher.username} for {skill.name} has been withdrawn.', 'info')
+        else:  # pending_teacher
+            if current_user.id == connection.teacher_id:
+                # Teacher is withdrawing their own teaching offer
+                learner = User.query.get(connection.learner_id)
+                flash(f'Your teaching offer to {learner.username} for {skill.name} has been withdrawn.', 'info')
+            else:
+                # Learner is rejecting a teaching offer
+                teacher = User.query.get(connection.teacher_id)
+                flash(f'Teaching offer from {teacher.username} for {skill.name} has been declined.', 'info')
     
     return redirect(url_for('dashboard'))
 
@@ -499,4 +525,3 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()  # Create database tables if they don't exist
     app.run(debug=True)
-
