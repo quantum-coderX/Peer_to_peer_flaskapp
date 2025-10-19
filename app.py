@@ -418,30 +418,30 @@ def handle_connection(connection_id, action):
     
     elif action == 'reject':
         # Both teachers and learners can reject/remove requests
-        connection.status = 'rejected'
-        db.session.commit()
-        
+        # Store the information before deleting the connection
         skill = Skill.query.get(connection.skill_id)
+        teacher = User.query.get(connection.teacher_id)
+        learner = User.query.get(connection.learner_id)
         
         # Customize message based on who is rejecting and the type of request
         if original_status == 'pending_learner' or original_status == 'pending':
             if current_user.id == connection.teacher_id:
                 # Teacher is rejecting a learner's request
-                learner = User.query.get(connection.learner_id)
                 flash(f'Learning request from {learner.username} for {skill.name} has been rejected.', 'info')
             else:
                 # Learner is withdrawing their own request
-                teacher = User.query.get(connection.teacher_id)
                 flash(f'Your learning request to {teacher.username} for {skill.name} has been withdrawn.', 'info')
         else:  # pending_teacher
             if current_user.id == connection.teacher_id:
                 # Teacher is withdrawing their own teaching offer
-                learner = User.query.get(connection.learner_id)
                 flash(f'Your teaching offer to {learner.username} for {skill.name} has been withdrawn.', 'info')
             else:
                 # Learner is rejecting a teaching offer
-                teacher = User.query.get(connection.teacher_id)
                 flash(f'Teaching offer from {teacher.username} for {skill.name} has been declined.', 'info')
+        
+        # Delete the connection from the database
+        db.session.delete(connection)
+        db.session.commit()
     
     return redirect(url_for('dashboard'))
 
