@@ -65,41 +65,51 @@
           <h5 class="mb-0">My Connections</h5>
         </div>
         <div class="card-body">
-          <h6>Teaching Connections:</h6>
+          <h6>Teaching Connection Requests:</h6>
           <ul class="list-group mb-3">
-            {% if teaching_connections %} {% for connection in
-            teaching_connections %}
-            <li
-              class="list-group-item d-flex justify-content-between align-items-center"
-            >
-              Teaching {{ connection.learner.username }} - {{
-              connection.skill.name }}
-              <span
-                class="badge bg-{{ 'success' if connection.status == 'accepted' else 'warning' }} rounded-pill"
-                >{{ connection.status }}</span
-              >
-            </li>
-            {% endfor %} {% else %}
-            <li class="list-group-item">No teaching connections yet.</li>
+            {% if teaching_connections %}
+              {% set pending_teaching = teaching_connections|selectattr('status', 'equalto', 'pending')|list %}
+              {% if pending_teaching %}
+                {% for connection in pending_teaching %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  Teaching {{ connection.learner.username }} - {{ connection.skill.name }}
+                  <div>
+                    <span class="badge bg-warning rounded-pill">pending</span>
+                    <a href="{{ url_for('handle_connection', connection_id=connection.id, action='accept') }}" class="btn btn-sm btn-success ms-2">Accept</a>
+                    <a href="{{ url_for('handle_connection', connection_id=connection.id, action='reject') }}" class="btn btn-sm btn-danger ms-2">Reject</a>
+                  </div>
+                </li>
+                {% endfor %}
+              {% else %}
+                <li class="list-group-item">No pending teaching requests.</li>
+              {% endif %}
+            {% else %}
+              <li class="list-group-item">No teaching connection requests.</li>
             {% endif %}
           </ul>
 
-          <h6>Learning Connections:</h6>
+          <h6>Learning Connection Requests:</h6>
           <ul class="list-group">
-            {% if learning_connections %} {% for connection in
-            learning_connections %}
-            <li
-              class="list-group-item d-flex justify-content-between align-items-center"
-            >
-              Learning from {{ connection.teacher.username }} - {{
-              connection.skill.name }}
-              <span
-                class="badge bg-{{ 'success' if connection.status == 'accepted' else 'warning' }} rounded-pill"
-                >{{ connection.status }}</span
-              >
-            </li>
-            {% endfor %} {% else %}
-            <li class="list-group-item">No learning connections yet.</li>
+            {% if learning_connections %}
+              {% set pending_learning = learning_connections|selectattr('status', 'equalto', 'pending')|list %}
+              {% if pending_learning %}
+                {% for connection in pending_learning %}
+                <li class="list-group-item">
+                  <div class="d-flex justify-content-between align-items-center">
+                    Learning from {{ connection.teacher.username }} - {{ connection.skill.name }}
+                    <div>
+                      <span class="badge bg-warning rounded-pill">pending</span>
+                      <a href="{{ url_for('handle_connection', connection_id=connection.id, action='reject') }}" class="btn btn-sm btn-danger ms-2">Reject</a>
+                    </div>
+                  </div>
+                  <small class="text-muted mt-1 d-block">Waiting for teacher to accept the connection request</small>
+                </li>
+                {% endfor %}
+              {% else %}
+                <li class="list-group-item">No pending learning requests.</li>
+              {% endif %}
+            {% else %}
+              <li class="list-group-item">No learning connection requests.</li>
             {% endif %}
           </ul>
 
@@ -112,6 +122,55 @@
       </div>
     </div>
   </div>
+
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header bg-info text-white">
+          <h5 class="mb-0">My Active Connections</h5>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Connection Type</th>
+                  <th>Skill</th>
+                  <th>With</th>
+                  <th>Status</th>
+                  <th>Established On</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% if active_connections %}
+                  {% for connection in active_connections %}
+                  <tr>
+                    <td>{% if connection.teacher_id == current_user.id %}Teaching{% else %}Learning{% endif %}</td>
+                    <td>{{ connection.skill.name }}</td>
+                    <td>{% if connection.teacher_id == current_user.id %}{{ connection.learner.username }}{% else %}{{ connection.teacher.username }}{% endif %}</td>
+                    <td><span class="badge bg-success">{{ connection.status }}</span></td>
+                    <td>{{ connection.created_at.strftime('%Y-%m-%d') }}</td>
+                  </tr>
+                  {% endfor %}
+                {% else %}
+                  <tr>
+                    <td colspan="5" class="text-center">No active connections yet.</td>
+                  </tr>
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
+
+          <div class="mt-3">
+            <a href="{{ url_for('find_connections') }}" class="btn btn-info"
+              >Find New Connections</a
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 
   <div class="row">
     <div class="col-12">
@@ -171,5 +230,8 @@
       </div>
     </div>
   </div>
+
+
+  
 </div>
 {% endblock %}

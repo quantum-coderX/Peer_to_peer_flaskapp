@@ -1,3 +1,6 @@
+import os
+from datetime import datetime
+
 from flask import Flask, render_template, url_for, request, jsonify, flash, redirect
 from flask_marshmallow import Marshmallow
 from flask_sqlalchemy import SQLAlchemy
@@ -5,12 +8,9 @@ from flask_migrate import Migrate
 from flask_login import LoginManager, UserMixin, login_user, current_user, logout_user, login_required
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import Table, Column, Integer, String, Float
-from forms import LoginForm, RegistrationForm, SkillForm, UserSkillForm, ResourceForm, ConnectionRequestForm, ProfileUpdateForm, PostForm, DeletePostForm
-from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
-import pandas as pd
-import numpy as np
-import os
+
+from forms import LoginForm, RegistrationForm, SkillForm, UserSkillForm, ResourceForm, ConnectionRequestForm, ProfileUpdateForm, PostForm, DeletePostForm
 
 
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -201,11 +201,21 @@ def dashboard():
     # Get user's learning skills
     learning_skills = UserSkill.query.filter_by(user_id=current_user.id, is_teacher=False).all()
     
-    # Get user's teaching connections
+    # Get user's teaching connections (as teacher)
     teaching_connections = Connection.query.filter_by(teacher_id=current_user.id).all()
     
-    # Get user's learning connections
+    # Get user's learning connections (as learner)
     learning_connections = Connection.query.filter_by(learner_id=current_user.id).all()
+    
+    # Get active connections (both teaching and learning, where status is 'accepted')
+    active_connections = (
+        Connection.query
+        .filter(
+            ((Connection.teacher_id == current_user.id) | (Connection.learner_id == current_user.id)),
+            Connection.status == 'accepted'
+        )
+        .all()
+    )
     
     # Get resources relevant to user's skills
     user_skill_ids = [skill.skill_id for skill in teaching_skills + learning_skills]
@@ -216,6 +226,7 @@ def dashboard():
                           learning_skills=learning_skills,
                           teaching_connections=teaching_connections,
                           learning_connections=learning_connections,
+                          active_connections=active_connections,
                           resources=resources)
 
 @app.route('/add-skill', methods=['GET', 'POST'])
@@ -316,6 +327,27 @@ def request_connection(user_id, skill_id, mode):
     target_user = User.query.get_or_404(user_id)
     skill = Skill.query.get_or_404(skill_id)
     
+    # Check if a connection already exists
+    existing_connection = None
+    if mode == 'teachers':
+        # Current user wants to learn from target user
+        existing_connection = Connection.query.filter_by(
+            teacher_id=user_id,
+            learner_id=current_user.id,
+            skill_id=skill_id
+        ).first()
+    else:
+        # Current user wants to teach target user
+        existing_connection = Connection.query.filter_by(
+            teacher_id=current_user.id,
+            learner_id=user_id,
+            skill_id=skill_id
+        ).first()
+    
+    if existing_connection:
+        flash(f'A connection request for this skill already exists.', 'warning')
+        return redirect(url_for('dashboard'))
+    
     # Create the connection based on the mode
     if mode == 'teachers':
         # Current user wants to learn from target user
@@ -339,6 +371,43 @@ def request_connection(user_id, skill_id, mode):
     db.session.add(connection)
     db.session.commit()
     flash(flash_message, 'success')
+    
+    return redirect(url_for('dashboard'))
+    
+@app.route('/handle-connection/<int:connection_id>/<string:action>')
+@login_required
+def handle_connection(connection_id, action):
+    # Get the connection
+    connection = Connection.query.get_or_404(connection_id)
+    
+    # Verify the current user is involved in this connection
+    if connection.teacher_id != current_user.id and connection.learner_id != current_user.id:
+        flash('You are not authorized to handle this connection request.', 'danger')
+        return redirect(url_for('dashboard'))
+    
+    # For accepting connections, only teachers can accept
+    if action == 'accept' and current_user.id != connection.teacher_id:
+        flash('Only teachers can accept connection requests.', 'warning')
+        return redirect(url_for('dashboard'))
+    
+    # Handle the action
+    if action == 'accept':
+        connection.status = 'accepted'
+        db.session.commit()
+        
+        # Get the learner
+        learner = User.query.get(connection.learner_id)
+        skill = Skill.query.get(connection.skill_id)
+        
+        flash(f'Connection with {learner.username} for {skill.name} has been accepted!', 'success')
+    elif action == 'reject':
+        # Both teachers and learners can reject requests
+        connection.status = 'rejected'
+        db.session.commit()
+        
+        # Get the other user
+        other_user = User.query.get(connection.teacher_id if connection.learner_id == current_user.id else connection.learner_id)
+        flash(f'Connection request with {other_user.username} has been rejected.', 'info')
     
     return redirect(url_for('dashboard'))
 
