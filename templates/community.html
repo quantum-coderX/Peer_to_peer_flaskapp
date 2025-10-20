@@ -1,3 +1,8 @@
+{% extends "layout.html" %}
+
+{% block title %}Community - PeerLearn{% endblock %}
+
+{% block content %}
 <h2>Community Board</h2>
 
 <style>
@@ -35,7 +40,7 @@
 </style>
 
 <div class="community-header">
-  <h2>Community Board</h2>
+  <h2></h2>
   <a href="{{ url_for('new_post') }}" class="btn btn-primary">+ New Post</a>
 </div>
 
@@ -48,7 +53,7 @@
           {{ post.content[:140] }}{% if post.content|length > 140 %}...{% endif %}
         </p>
         <div class="muted" style="margin-top:.5rem;">
-          By {{ post.user.username }} • {{ post.created_at.strftime("%Y-%m-%d") }}
+          By {{ post.user.username }} • {{ post.created_at.strftime('%Y-%m-%d') }}
         </div>
       </a>
 
@@ -67,3 +72,4 @@
     </li>
   {% endfor %}
 </ul>
+{% endblock %}
