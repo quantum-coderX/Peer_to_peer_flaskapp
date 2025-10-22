@@ -60,6 +60,66 @@
               </div>
               {% else %} {{ form.skill(class="form-select") }} {% endif %}
             </div>
+            
+            <div class="mb-3">
+              <label class="form-label">{{ form.share_mode.label }}</label>
+              {% for subfield in form.share_mode %}
+                <div class="form-check">
+                  {{ subfield(class="form-check-input") }}
+                  {{ subfield.label(class="form-check-label") }}
+                </div>
+              {% endfor %}
+              {% if form.share_mode.errors %}
+              <div class="invalid-feedback d-block">
+                {% for error in form.share_mode.errors %}
+                <span>{{ error }}</span>
+                {% endfor %}
+              </div>
+              {% endif %}
+            </div>
+            
+            <div class="mb-3" id="connections-field">
+              {{ form.connections.label(class="form-label") }}
+              <small class="form-text text-muted d-block mb-2">
+                Hold Ctrl (Windows) or Cmd (Mac) to select multiple connections
+              </small>
+              {% if form.connections.errors %}
+              {{ form.connections(class="form-select is-invalid", size="5") }}
+              <div class="invalid-feedback">
+                {% for error in form.connections.errors %}
+                <span>{{ error }}</span>
+                {% endfor %}
+              </div>
+              {% else %} 
+              {{ form.connections(class="form-select", size="5") }} 
+              {% endif %}
+            </div>
+            
+            <script>
+              // Show/hide connections field based on share mode
+              document.addEventListener('DOMContentLoaded', function() {
+                const shareMode = document.getElementsByName('share_mode');
+                const connectionsField = document.getElementById('connections-field');
+                
+                function toggleConnectionsField() {
+                  const selectedMode = document.querySelector('input[name="share_mode"]:checked').value;
+                  if (selectedMode === 'connections') {
+                    connectionsField.style.display = 'block';
+                  } else {
+                    connectionsField.style.display = 'none';
+                  }
+                }
+                
+                // Initial state
+                toggleConnectionsField();
+                
+                // Add event listeners
+                shareMode.forEach(radio => {
+                  radio.addEventListener('change', toggleConnectionsField);
+                });
+              });
+            </script>
+            
             <div class="d-grid gap-2">
               {{ form.submit(class="btn btn-info") }}
             </div>

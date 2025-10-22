@@ -445,6 +445,37 @@ def handle_connection(connection_id, action):
     
     return redirect(url_for('dashboard'))
 
+@app.route('/resources')
+@login_required
+def view_resources():
+    # Get filter parameters
+    skill_id = request.args.get('skill_id', type=int)
+    
+    # Get all skills for the dropdown
+    skills = Skill.query.order_by(Skill.name).all()
+    
+    # Get user's skill IDs (both teaching and learning)
+    user_skill_ids = [skill.skill_id for skill in current_user.skills]
+    
+    # Build the query based on filters
+    if skill_id:
+        # Filter by specific skill
+        resources = Resource.query.filter_by(skill_id=skill_id).order_by(Resource.created_at.desc()).all()
+        selected_skill = Skill.query.get(skill_id)
+    elif user_skill_ids:
+        # Show resources for user's skills
+        resources = Resource.query.filter(Resource.skill_id.in_(user_skill_ids)).order_by(Resource.created_at.desc()).all()
+        selected_skill = None
+    else:
+        # Show all resources if user has no skills
+        resources = Resource.query.order_by(Resource.created_at.desc()).all()
+        selected_skill = None
+    
+    return render_template('resources.html', 
+                          resources=resources,
+                          skills=skills,
+                          selected_skill=selected_skill)
+
 @app.route('/share-resource', methods=['GET', 'POST'])
 @login_required
 def share_resource():
@@ -466,7 +497,7 @@ def share_resource():
         db.session.commit()
         
         flash('Learning resource has been shared successfully!', 'success')
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('view_resources'))
         
     return render_template('share_resource.html', form=form)
 

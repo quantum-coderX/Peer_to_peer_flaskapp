@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, SubmitField, TextAreaField, SelectField, IntegerField, FileField
+from wtforms import StringField, PasswordField, BooleanField, SubmitField, TextAreaField, SelectField, IntegerField, FileField, SelectMultipleField, RadioField
 from wtforms.validators import DataRequired, Email, Length, EqualTo, NumberRange, Optional, URL
 from flask_wtf.file import FileAllowed
 
@@ -40,6 +40,12 @@ class ResourceForm(FlaskForm):
     description = TextAreaField('Description', validators=[Optional(), Length(max=500)])
     url = StringField('URL (if online resource)', validators=[Optional(), URL()])
     skill = SelectField('Related Skill', coerce=int, validators=[DataRequired()])
+    share_mode = RadioField('Share With', 
+                           choices=[('all', 'All users with this skill'), 
+                                   ('connections', 'Specific connections only')],
+                           default='all',
+                           validators=[DataRequired()])
+    connections = SelectMultipleField('Select Connections (optional)', coerce=int, validators=[Optional()])
     submit = SubmitField('Share Resource')
 
 class ProfileUpdateForm(FlaskForm):
